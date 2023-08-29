@@ -1,0 +1,51 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "logs.aws-region.amazonaws.com"
+            },
+            "Action": "s3:GetBucketAcl",
+            "Resource": "arn:aws:s3:::destination-s3-bucket",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "123456789012"
+                },
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:logs:aws-region:123456789012:log-group:exported-log-group:*"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "logs.aws-region.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::destination-s3-bucket/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "123456789012",
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                },
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:logs:aws-region:123456789012:log-group:exported-log-group:*"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::123456789012:role/iam-permission-for-the-export-role"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::destination-s3-bucket/*",
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        }
+    ]
+}

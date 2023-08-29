@@ -1,0 +1,36 @@
+// IAM policy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::destination-s3-bucket/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateExportTask",
+                "logs:CancelExportTask",
+                "logs:DescribeExportTasks",
+                "logs:DescribeLogStreams",
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
+// Service polcy
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
