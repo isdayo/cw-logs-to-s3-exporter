@@ -11,26 +11,41 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 log_client = boto3.client("logs")
+ssm_client = boto3.client("ssm")
 
 def lambda_handler(event, context):
     log_group_to_export = get_log_group()
-    # TODO: 
-    # 1. Create ssm_value to store current time in ParameterStore
-    # 2. Add ParameterStore permission to retrieve ssm_value to the IAM role 
-    # 3. Update ssm_value to value from parameter store
-    ssm_value = int((3600*2 + 60*30 + 5)*1000)
-    export_to_time = int(time.time() *1000)
+    ssm_parameter = "last_export_time"
+    export_from_time = int(get_last_export(ssm_parameter))
+    export_to_time = int(time.time() * 1000)
+    if not ((export_to_time - export_from_time) < (24 * 60 * 60 * 1000)):
+        try:
+            response = log_client.create_export_task(
+                logGroupName=log_group_to_export,
+                fromTime=export_from_time,
+                to=export_to_time,
+                destination=S3_BUCKET
+            )
+            logger.info("Done. {} export to {} S3 bucket is completed!".format(log_group_to_export, S3_BUCKET))
+        except Exception as e:
+            logger.error("Task failed to be exported")
+            print("Exporting error: {}".format(e))
+        finally:
+            ssm_response = ssm_client.put_parameter(
+            Name=ssm_parameter,
+            Type="String",
+            Value=str(export_to_time),
+            Overwrite=True)
+
+def get_last_export(ssm_parameter):
+    ssm_parameter_name = ssm_parameter
     try:
-        response = log_client.create_export_task(
-            logGroupName=log_group_to_export,
-            fromTime=int(ssm_value),
-            to=export_to_time,
-            destination=S3_BUCKET
-        )
-        logger.info("Done. {} export to {} S3 bucket is completed!".format(log_group_to_export, S3_BUCKET))
+        ssm_response = ssm_client.get_parameter(Name=ssm_parameter_name)
+        ssm_value = ssm_response['Parameter']['Value']
+        return ssm_value
     except Exception as e:
-        logger.error("Task failed to be exported")
-        print("Exporting error: {}".format(e))
+        logger.error("Fail to get last export time from SSM")
+        print("Error: {}".format(e))
 
 def get_log_group():
     parameters_dict = dict()
