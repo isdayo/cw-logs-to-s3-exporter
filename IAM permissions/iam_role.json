@@ -17,6 +17,15 @@
                 "logs:DescribeLogGroups"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                "ssm:PutParameter"
+            ],
+            "Resource": "arn:aws:ssm:{region}:{acct-id}:parameter/last_export_time"
         }
     ]
 }
